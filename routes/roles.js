@@ -48,8 +48,14 @@ router.post('/add', async function(req, res, next) {
         res.json(Response.successResponse(role));
 
     } catch (err) {
+        if (err.code == 11000) {
+            let error = new CustomError(Enums.HTTP_CODES.CONFLICT, 'Conflict', 'Bu isimde bir rol zaten mevcut!');
+            let errorResponse = Response.errorResponse(error);
+            return res.status(Enums.HTTP_CODES.CONFLICT).json(errorResponse);
+        }
+
         let errorResponse = Response.errorResponse(err);
-        res.status(err.code || Enums.HTTP_CODES.INTERNAL_SERVER_ERROR).json(errorResponse);
+        res.status(err.status || Enums.HTTP_CODES.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
 });
 
