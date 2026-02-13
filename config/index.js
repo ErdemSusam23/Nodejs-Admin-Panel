@@ -5,5 +5,6 @@ module.exports = {
     "JWT": {
         "SECRET": process.env.JWT_SECRET || "default_secret_key",
         "EXPIRE_TIME": !isNaN(parseInt(process.env.JWT_EXPIRE_TIME)) ? parseInt(process.env.JWT_EXPIRE_TIME) : 24 * 60 * 60 // 1 gün
-    }
+    },
+    "DEFAULT_LANGUAGE": process.env.DEFAULT_LANGUAGE || "EN"
 };
