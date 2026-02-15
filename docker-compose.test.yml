@@ -1,0 +1,42 @@
+# docker-compose.test.yml
+services:
+  mongodb-test:
+    image: mongo:7.0
+    container_name: nodejs-mongodb-test
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=nodejs_test
+    volumes:
+      - mongodb_test_data:/data/db
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  app-test:
+    build: .
+    container_name: nodejs-app-test
+    environment:
+      - NODE_ENV=test
+      - CONNECTION_STRING=mongodb://mongodb-test:27017/nodejs_test
+      - LOG_LEVEL=off
+      - JWT_SECRET=test_secret_key_for_testing
+      - JWT_EXPIRE_TIME=1h
+    depends_on:
+      mongodb-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm test
+
+volumes:
+  mongodb_test_data:
+
+networks:
+  test-network:
+    driver: bridge
