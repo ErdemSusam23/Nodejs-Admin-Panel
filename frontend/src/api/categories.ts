@@ -24,19 +24,19 @@ export const categoryApi = {
 
   // Create category
   createCategory: async (categoryData: CreateCategoryRequest): Promise<Category> => {
-    const { data } = await apiClient.post<Category>('/categories', categoryData)
+    const { data } = await apiClient.post<Category>('/categories/add', categoryData)
     return data
   },
 
   // Update category
   updateCategory: async (id: string, categoryData: UpdateCategoryRequest): Promise<Category> => {
-    const { data } = await apiClient.put<Category>(`/categories/${id}`, categoryData)
+    const { data } = await apiClient.post<Category>('/categories/update', { _id: id, ...categoryData })
     return data
   },
 
   // Delete category
   deleteCategory: async (id: string): Promise<void> => {
-    await apiClient.delete(`/categories/${id}`)
+    await apiClient.post('/categories/delete', { _id: id })
   },
 
   // Get category tree

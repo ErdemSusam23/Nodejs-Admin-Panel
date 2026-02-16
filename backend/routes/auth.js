@@ -28,4 +28,22 @@ router.get('/me', auth.authenticate(), async (req, res) => {
     }
 });
 
+/* POST /auth/logout - Logout */
+router.post('/logout', auth.authenticate(), (req, res) => {
+    /*
+        #swagger.tags = ['Auth']
+        #swagger.summary = 'Logout'
+        #swagger.description = 'Logout the current user'
+        #swagger.security = [{
+            "bearerAuth": []
+        }]
+        #swagger.responses[200] = {
+            description: 'Logged out successfully'
+        }
+    */
+    // Since JWT is stateless, we just return success
+    // Client should remove the token
+    res.json(Response.successResponse({ message: 'Logged out successfully' }));
+});
+
 module.exports = router;

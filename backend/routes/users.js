@@ -18,28 +18,34 @@ const auth = require('../lib/auth')();
 const validate = require('../lib/validate');
 const schemas = require('./validations/Users');
 
-/* GET Users Listing - Listeleme */
+/* GET Users Listing - Listeleme ve Filtreleme */
 router.get('/', auth.authenticate(), auth.checkPrivileges("user_view"), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Get all users'
-        #swagger.description = 'Retrieve a list of all users with their roles'
-        #swagger.security = [{
-            "bearerAuth": []
-        }]
-        #swagger.responses[200] = {
-            description: 'Users retrieved successfully'
-        }
-    */
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Toplam kullanıcı sayısını al
-        const total = await Users.countDocuments();
+        // 1. FİLTRELEME NESNESİNİ OLUŞTUR
+        let match = {};
 
+        // Frontend'den gelen 'first_name', 'email' vb. parametreleri match objesine ekle
+        if (req.query.first_name) {
+            match.first_name = { $regex: req.query.first_name, $options: "i" };
+        }
+        if (req.query.last_name) {
+            match.last_name = { $regex: req.query.last_name, $options: "i" };
+        }
+        if (req.query.email) {
+            match.email = { $regex: req.query.email, $options: "i" };
+        }
+        if (req.query.is_active !== undefined) {
+            match.is_active = req.query.is_active === 'true';
+        }
+
+        // 2. AGGREGATION PIPELINE
+        // Filtreleme ($match) en başta olmalı ki sayfalama doğru çalışsın
         let users = await Users.aggregate([
+            { $match: match }, // <-- KRİTİK EKSİK BURASIYDI
             {
                 $lookup: {
                     from: "user_roles",
@@ -63,13 +69,13 @@ router.get('/', auth.authenticate(), auth.checkPrivileges("user_view"), async fu
                     __v: 0
                 }
             },
-            {
-                $skip: skip
-            },
-            {
-                $limit: limit
-            }
+            { $sort: { created_at: -1 } }, // En yeni kullanıcılar üstte
+            { $skip: skip },
+            { $limit: limit }
         ]);
+
+        // Toplam sayıyı da filtreye göre almalıyız
+        const total = await Users.countDocuments(match); // <-- match nesnesini buraya da verdik
 
         res.json(Response.successResponse({
             data: users,
@@ -88,53 +94,32 @@ router.get('/', auth.authenticate(), auth.checkPrivileges("user_view"), async fu
 
 /* POST Add User - Yeni Kullanıcı Ekleme */
 router.post('/add', auth.authenticate(), auth.checkPrivileges("user_add"), validate(schemas.create), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Add a new user'
-        #swagger.description = 'Create a new user account (Admin only)'
-        #swagger.security = [{
-            "bearerAuth": []
-        }]
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'User information',
-            required: true,
-            schema: {
-                email: 'newuser@example.com',
-                password: 'SecurePass123',
-                first_name: 'John',
-                last_name: 'Doe',
-                phone_number: '+905551234567',
-                roles: ['507f1f77bcf86cd799439012']
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'User created successfully'
-        }
-    */
     let body = req.body;
     try {
         let existingUser = await Users.findOne({ email: body.email });
         if (existingUser) {
             return res.status(Enums.HTTP_CODES.CONFLICT).json(
-                Response.errorResponse(new CustomError(Enums.HTTP_CODES.CONFLICT, req.t('COMMON.ALREADY_EXIST')))
+                Response.errorResponse(new CustomError(Enums.HTTP_CODES.CONFLICT, 'Email zaten kullanımda'))
             );
         }
 
-        let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(Enums.PASS_LENGTH), null);
+        // Şifre hashleme
+        let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10), null);
 
         let user = new Users({
             email: body.email,
             password: password,
-            is_active: true,
+            is_active: body.isActive !== undefined ? body.isActive : true, // Frontend'den isActive veya is_active gelebilir
             first_name: body.first_name,
             last_name: body.last_name,
             phone_number: body.phone_number
         });
         await user.save();
 
+        // Rol Atama İşlemi
         if (body.roles && Array.isArray(body.roles)) {
             for (let roleId of body.roles) {
+                // Rol ID'sinin geçerliliğini kontrol etmeyi düşünebilirsin
                 await UserRoles.create({ role_id: roleId, user_id: user._id });
             }
         }
@@ -152,37 +137,12 @@ router.post('/add', auth.authenticate(), auth.checkPrivileges("user_add"), valid
 
 /* POST Update User */
 router.post('/update', auth.authenticate(), auth.checkPrivileges("user_update"), validate(schemas.update), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Update an existing user'
-        #swagger.description = 'Update user information and roles'
-        #swagger.security = [{
-            "bearerAuth": []
-        }]
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'User update information',
-            required: true,
-            schema: {
-                _id: '507f1f77bcf86cd799439011',
-                first_name: 'John',
-                last_name: 'Doe',
-                phone_number: '+905551234567',
-                is_active: true,
-                password: 'NewPassword123',
-                roles: ['507f1f77bcf86cd799439012']
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'User updated successfully'
-        }
-    */
     let body = req.body;
     try {
         let updates = {};
 
-        if (body.password) {
-            updates.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);
+        if (body.password && body.password.length >= 6) {
+            updates.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10), null);
         }
         if (body.first_name) updates.first_name = body.first_name;
         if (body.last_name) updates.last_name = body.last_name;
@@ -191,6 +151,7 @@ router.post('/update', auth.authenticate(), auth.checkPrivileges("user_update"),
 
         await Users.updateOne({ _id: body._id }, { $set: updates });
 
+        // Rolleri güncelleme: Eskileri sil, yenileri ekle
         if (body.roles && Array.isArray(body.roles)) {
             await UserRoles.deleteMany({ user_id: body._id });
             for (let roleId of body.roles) {
@@ -210,25 +171,6 @@ router.post('/update', auth.authenticate(), auth.checkPrivileges("user_update"),
 
 /* POST Delete User */
 router.post('/delete', auth.authenticate(), auth.checkPrivileges("user_delete"), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Delete a user'
-        #swagger.description = 'Delete a user and their role associations'
-        #swagger.security = [{
-            "bearerAuth": []
-        }]
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'User ID to delete',
-            required: true,
-            schema: {
-                _id: '507f1f77bcf86cd799439011'
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'User deleted successfully'
-        }
-    */
     let body = req.body;
     try {
         if (!body._id) throw new CustomError(Enums.HTTP_CODES.BAD_REQUEST, 'Validation Error', '_id is required');
@@ -248,34 +190,17 @@ router.post('/delete', auth.authenticate(), auth.checkPrivileges("user_delete"),
 
 /* POST Login */
 router.post('/login', validate(schemas.login), async (req, res) => {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'User login'
-        #swagger.description = 'Authenticate user and receive JWT token'
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'Login credentials',
-            required: true,
-            schema: {
-                email: 'user@example.com',
-                password: 'password123'
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'Login successful'
-        }
-    */
     try {
         const { email, password } = req.body;
 
         const user = await Users.findOne({ email: email });
         if (!user) {
-            throw new CustomError(Enums.HTTP_CODES.UNAUTHORIZED, req.t('USERS.AUTH_ERROR'), req.t('USERS.AUTH_ERROR'));
+            throw new CustomError(Enums.HTTP_CODES.UNAUTHORIZED, "Geçersiz email veya şifre");
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            throw new CustomError(Enums.HTTP_CODES.UNAUTHORIZED, req.t('USERS.AUTH_ERROR'), req.t('USERS.AUTH_ERROR'));
+            throw new CustomError(Enums.HTTP_CODES.UNAUTHORIZED, "Geçersiz email veya şifre");
         }
 
         const payload = { id: user._id, email: user.email };
@@ -302,17 +227,6 @@ router.post('/login', validate(schemas.login), async (req, res) => {
 
 /* POST Export Users */
 router.post('/export', auth.authenticate(), auth.checkPrivileges("user_view"), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Export users to Excel'
-        #swagger.description = 'Download all users as an Excel file'
-        #swagger.security = [{
-            "bearerAuth": []
-        }]
-        #swagger.responses[200] = {
-            description: 'Excel file download'
-        }
-    */
     try {
         let users = await Users.find({}, { password: 0, __v: 0 }).lean(); 
 
@@ -335,26 +249,6 @@ router.post('/export', auth.authenticate(), auth.checkPrivileges("user_view"), a
 
 /* POST Register */
 router.post('/register', validate(schemas.create), async function(req, res, next) {
-    /*
-        #swagger.tags = ['Users']
-        #swagger.summary = 'Register first user (Initial setup)'
-        #swagger.description = 'Register the first super admin user. Only works if no users exist.'
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'User registration information',
-            required: true,
-            schema: {
-                email: 'admin@example.com',
-                password: 'AdminPass123',
-                first_name: 'Admin',
-                last_name: 'User',
-                phone_number: '+905551234567'
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'System initialized successfully'
-        }
-    */
     let body = req.body;
     let createdUser = null; 
 
@@ -395,7 +289,6 @@ router.post('/register', validate(schemas.create), async function(req, res, next
 
     } catch (err) {
         if (createdUser) await Users.deleteOne({ _id: createdUser._id });
-        
         let errorResponse = Response.errorResponse(err);
         res.status(err.code || Enums.HTTP_CODES.INTERNAL_SERVER_ERROR).json(errorResponse);
     }

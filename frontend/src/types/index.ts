@@ -1,159 +1,131 @@
-// User Types
-export interface User {
+// --- ORTAK TİPLER ---
+export interface BaseEntity {
   _id: string
+  created_at: string // Backend'den snake_case geliyor
+  updated_at: string // Backend'den snake_case geliyor
+}
+
+// --- USER TYPES ---
+export interface User extends BaseEntity {
+  email: string
   first_name: string
   last_name: string
-  email: string
-  is_active: boolean
   phone_number?: string
-  created_at: string
-  updated_at: string
+  is_active: boolean
+  // Eğer backend user objesi içinde rol bilgisini populate edip gönderiyorsa:
+  roles?: Role[] 
 }
 
 export interface CreateUserRequest {
-  name: string
   email: string
   password: string
-  roleId: string
-  isActive?: boolean
+  first_name: string
+  last_name: string
+  phone_number?: string
+  is_active?: boolean
+  // Rol ataması backend'de ayrı bir işlem olabilir veya array olarak beklenebilir
+  roles?: string[] 
 }
 
 export interface UpdateUserRequest {
-  name?: string
+  _id: string // Update için ID şart
   email?: string
   password?: string
-  roleId?: string
-  isActive?: boolean
+  first_name?: string
+  last_name?: string
+  phone_number?: string
+  is_active?: boolean
+  roles?: string[]
 }
 
-// Role Types
-export interface Role {
-  _id: string
-  name: string
-  description?: string
-  permissions: string[]
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+// --- ROLE TYPES ---
+export interface Role extends BaseEntity {
+  role_name: string // Backend'de 'role_name'
+  description?: string // Şemada yok ama kodda kullanılmış, opsiyonel kalsın
+  is_active: boolean
+  created_by?: string
+  permissions?: string[] // RolePrivileges tablosundan gelmeli
 }
 
 export interface CreateRoleRequest {
-  name: string
+  role_name: string // 'name' yerine 'role_name'
   description?: string
+  is_active?: boolean
   permissions: string[]
-  isActive?: boolean
 }
 
 export interface UpdateRoleRequest {
-  name?: string
+  role_name?: string
   description?: string
+  is_active?: boolean
   permissions?: string[]
-  isActive?: boolean
 }
 
-// Category Types
-export interface Category {
-  _id: string
+// --- CATEGORY TYPES ---
+export interface Category extends BaseEntity {
   name: string
-  description?: string
-  parentId?: string | null
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+  is_active: boolean
+  created_by?: string
 }
 
 export interface CreateCategoryRequest {
   name: string
-  description?: string
-  parentId?: string
-  isActive?: boolean
+  is_active?: boolean
 }
 
 export interface UpdateCategoryRequest {
+  _id: string
   name?: string
-  description?: string
-  parentId?: string
-  isActive?: boolean
+  is_active?: boolean
 }
 
-// Auth Types
+// --- AUTH TYPES ---
 export interface LoginRequest {
   email: string
   password: string
 }
 
 export interface LoginResponse {
-  user: {
-    id: string
-    email: string
-    first_name: string
-    last_name: string
+  code: number
+  message: string
+  data: {
+    user: User
+    token: string
   }
-  token: string
 }
 
-// Audit Log Types
-export interface AuditLog {
-  _id: string
-  userId: string | User
-  action: string
-  resource: string
-  resourceId?: string
-  changes?: Record<string, unknown>
-  ipAddress?: string
-  userAgent?: string
-  createdAt: string
+// --- AUDIT LOG TYPES (Backend Şemasına Göre Düzeltildi) ---
+export interface AuditLog extends BaseEntity {
+  level?: string
+  email: string // İşlemi yapan kişi
+  location: string // İşlem yeri (Örn: Users, Categories)
+  proc_type: string // İşlem tipi (Örn: Login, Update)
+  log: Record<string, any> // Mixed type, detaylı log verisi
 }
 
-// Pagination Types
-export interface PaginationParams {
-  page?: number
-  limit?: number
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
+// --- PAGINATION & FILTERS ---
+export interface Pagination {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export interface PaginatedResponse<T> {
-  data: T[]
-  pagination: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
-}
-
-// API Response Types
-export interface ApiResponse<T = unknown> {
-  success: boolean
-  data?: T
+  code: number
   message?: string
-  error?: string
+  data: T[] // Veri listesi burada
+  pagination?: Pagination // Backend bazen pagination dönmeyebiliyor, opsiyonel yaptık
 }
 
-// Filter Types
-export interface UserFilters extends PaginationParams {
-  name?: string
-  email?: string
-  roleId?: string
-  isActive?: boolean
-}
-
-export interface RoleFilters extends PaginationParams {
-  name?: string
-  isActive?: boolean
-}
-
-export interface CategoryFilters extends PaginationParams {
-  name?: string
-  parentId?: string
-  isActive?: boolean
-}
-
-export interface AuditLogFilters extends PaginationParams {
-  userId?: string
-  action?: string
-  resource?: string
-  startDate?: string
-  endDate?: string
+// --- GENERIC API RESPONSE ---
+// Backend yapısına uygun standart wrapper
+export interface ApiResponse<T = unknown> {
+  code: number
+  message: string
+  data: T
+  error?: {
+    message: string
+    description?: string
+  }
 }
