@@ -1,7 +1,6 @@
 import apiClient from '@/lib/api-client'
 // AuditLog tipini aşağıda düzelttiğimiz sayfada kullanacağız, 
 // o yüzden burada any veya güncel tipi kullanabiliriz.
-import type { PaginatedResponse } from '@/types'
 
 // Backend modeline uygun tip tanımı
 export interface AuditLogItem {

@@ -85,9 +85,7 @@ export default function CategoriesPage() {
   // Backend wrapper yapısına göre veriyi alalım
   // API { code: 200, data: { data: [...] } } veya { code: 200, data: [...] } dönebilir.
   // Senin swagger'ına göre data içinde array var.
-  const categories: Category[] = Array.isArray(categoriesResponse?.data) 
-    ? categoriesResponse.data 
-    : (categoriesResponse?.data?.data || [])
+  const categories: Category[] = categoriesResponse?.data?.data || []
 
   // Create mutation
   const createMutation = useMutation({

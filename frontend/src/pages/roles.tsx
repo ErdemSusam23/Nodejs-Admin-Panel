@@ -231,7 +231,7 @@ export default function RolesPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Roller ({rolesData?.pagination?.total || 0})
+            Roller ({rolesData?.data?.pagination?.total || 0})
           </CardTitle>
           <CardDescription>
             Sistemdeki tüm rollerin listesi
@@ -254,14 +254,14 @@ export default function RolesPage() {
                     Yükleniyor...
                   </TableCell>
                 </TableRow>
-              ) : rolesData?.data.length === 0 ? (
+              ) : rolesData?.data?.data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center">
                     Rol bulunamadı
                   </TableCell>
                 </TableRow>
               ) : (
-                rolesData?.data.map((role) => (
+                rolesData?.data?.data.map((role: Role) => (
                   <TableRow key={role._id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -302,10 +302,10 @@ export default function RolesPage() {
           </Table>
 
           {/* Pagination */}
-          {rolesData?.pagination && rolesData.pagination.totalPages > 1 && (
+          {rolesData?.data?.pagination && rolesData.data.pagination.totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
-              Sayfa {rolesData.pagination.page} / {rolesData.pagination.totalPages}
+              Sayfa {rolesData.data.pagination.page} / {rolesData.data.pagination.totalPages}
                </p>
               <div className="flex gap-2">
                 <Button
@@ -320,7 +320,7 @@ export default function RolesPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPage((p) => p + 1)}
-                  disabled={page >= rolesData.pagination.totalPages}
+                  disabled={page >= rolesData.data.pagination.totalPages}
                 >
                   Sonraki
                 </Button>

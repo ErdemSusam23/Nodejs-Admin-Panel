@@ -62,19 +62,19 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Toplam Kullanıcı"
-          value={usersData?.pagination.total || 0}
+          value={usersData?.data?.pagination?.total || 0}
           icon={Users}
           isLoading={usersLoading}
         />
         <StatCard
           title="Toplam Rol"
-          value={rolesData?.pagination.total || 0}
+          value={rolesData?.data?.pagination?.total || 0}
           icon={Shield}
           isLoading={rolesLoading}
         />
         <StatCard
           title="Toplam Kategori"
-          value={categoriesData?.pagination.total || 0}
+          value={categoriesData?.data?.pagination?.total || 0}
           icon={FolderTree}
           isLoading={categoriesLoading}
         />

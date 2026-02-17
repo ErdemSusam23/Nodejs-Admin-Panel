@@ -20,26 +20,26 @@ export const roleApi = {
     const { data } = await apiClient.get('/roles', {
       params: filters,
     })
-    return data.data
+    return data
   },
 
   // Get single role
   getRole: async (id: string): Promise<Role> => {
     const { data } = await apiClient.get<Role>(`/roles/${id}`)
-    return data.data
+    return data
   },
 
   // Create role
   createRole: async (roleData: CreateRoleRequest): Promise<Role> => {
     const { data } = await apiClient.post('/roles/add', roleData)
-    return data.data
+    return data
   },
 
   // Update role
   updateRole: async (id: string, roleData: UpdateRoleRequest): Promise<Role> => {
     // Backend update body içinde _id bekliyor
     const { data } = await apiClient.post('/roles/update', { _id: id, ...roleData })
-    return data.data
+    return data
   },
 
   // Delete role
@@ -50,7 +50,7 @@ export const roleApi = {
   // Get ALL system permissions (Checkbox listesi için)
   getPermissions: async (): Promise<any> => {
     const { data } = await apiClient.get('/roles/permissions')
-    return data.data
+    return data
   },
 
   // Get privileges for a SPECIFIC role (Edit işlemi için gerekli)
@@ -59,6 +59,6 @@ export const roleApi = {
     const { data } = await apiClient.get('/roles/role_privileges', {
       params: { role_id: roleId }
     })
-    return data.data
+    return data
   }
 }

@@ -59,7 +59,7 @@ interface User {
   email: string
   is_active: boolean
   created_at: string
-  roles: Role[]
+  roles?: Role[]
 }
 
 const userSchema = z.object({
@@ -105,15 +105,12 @@ export default function UsersPage() {
       userApi.getUsers({
         page,
         limit: 10,
-        email: searchEmail || undefined,
-        first_name: searchName || undefined,
+        search: searchEmail || searchName || undefined,
         is_active: filterActive ? filterActive === 'true' : undefined,
       }),
   })
 
-  const users: User[] = Array.isArray(usersResponse?.data) 
-    ? usersResponse.data 
-    : (usersResponse?.data?.data || [])
+  const users: User[] = usersResponse?.data?.data || []
 
   // Rolleri Getir
   const { data: rolesResponse } = useQuery({
@@ -121,9 +118,7 @@ export default function UsersPage() {
     queryFn: () => roleApi.getRoles({ limit: 100 }),
   })
 
-  const roles: Role[] = Array.isArray(rolesResponse?.data)
-    ? rolesResponse.data
-    : (rolesResponse?.data?.data || [])
+  const roles: Role[] = rolesResponse?.data?.data || []
 
   // Create mutation
   const createMutation = useMutation({
@@ -293,7 +288,7 @@ export default function UsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Kullanıcılar ({usersResponse?.pagination?.total || 0})
+            Kullanıcılar ({usersResponse?.data?.pagination?.total || 0})
           </CardTitle>
           <CardDescription>
             Sistemdeki tüm kullanıcıların listesi
@@ -377,10 +372,10 @@ export default function UsersPage() {
           </Table>
 
           {/* Pagination Controls */}
-          {usersResponse?.pagination && usersResponse.pagination.totalPages > 1 && (
+          {usersResponse?.data?.pagination && usersResponse.data.pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
-                Sayfa {usersResponse.pagination.page} / {usersResponse.pagination.totalPages}
+                Sayfa {usersResponse.data.pagination.page} / {usersResponse.data.pagination.totalPages}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -396,7 +391,7 @@ export default function UsersPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPage((p) => p + 1)}
-                  disabled={page >= usersResponse.pagination.totalPages}
+                  disabled={page >= usersResponse.data.pagination.totalPages}
                 >
                   Sonraki
                   <ChevronRight className="h-4 w-4 ml-1" />

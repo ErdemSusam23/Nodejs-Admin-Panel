@@ -111,11 +111,34 @@ export interface Pagination {
   totalPages: number
 }
 
+export interface CategoryFilters {
+  page?: number
+  limit?: number
+  search?: string
+  is_active?: boolean
+}
+
+export interface RoleFilters {
+  page?: number
+  limit?: number
+  search?: string
+  is_active?: boolean
+}
+
+export interface UserFilters {
+  page?: number
+  limit?: number
+  search?: string
+  is_active?: boolean
+}
+
 export interface PaginatedResponse<T> {
   code: number
   message?: string
-  data: T[] // Veri listesi burada
-  pagination?: Pagination // Backend bazen pagination dönmeyebiliyor, opsiyonel yaptık
+  data: {
+    data: T[]
+    pagination?: Pagination
+  }
 }
 
 // --- GENERIC API RESPONSE ---

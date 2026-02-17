@@ -13,7 +13,7 @@ export const categoryApi = {
     const { data } = await apiClient.get('/categories', {
       params: filters,
     })
-    return data.data
+    return data
   },
 
   // Get single category
@@ -30,7 +30,8 @@ export const categoryApi = {
 
   // Update category
   updateCategory: async (id: string, categoryData: UpdateCategoryRequest): Promise<Category> => {
-    const { data } = await apiClient.post<Category>('/categories/update', { _id: id, ...categoryData })
+    const { _id, ...rest } = categoryData
+    const { data } = await apiClient.post<Category>('/categories/update', { _id: id, ...rest })
     return data
   },
 

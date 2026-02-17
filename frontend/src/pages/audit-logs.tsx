@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { auditApi, AuditLogItem } from '@/api/audit'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -22,14 +22,12 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
-import { Download, Eye, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 
@@ -181,7 +179,7 @@ export default function AuditLogsPage() {
               ) : logsData?.data?.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center py-8">Kayıt Bulunamadı</TableCell></TableRow>
               ) : (
-                logsData?.data.map((log) => (
+                logsData?.data.map((log: AuditLogItem) => (
                   <TableRow key={log._id}>
                     <TableCell>
                       {log.created_at ? format(new Date(log.created_at), 'dd MMM yyyy HH:mm', { locale: tr }) : '-'}

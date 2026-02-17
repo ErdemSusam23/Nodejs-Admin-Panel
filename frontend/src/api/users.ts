@@ -14,7 +14,7 @@ export const userApi = {
     const { data } = await apiClient.get('/users', {
       params: filters,
     })
-    return data.data // Backend wrapper { code: 200, data: { ... } } dönüyor, apiClient response interceptor bunu hallediyor olmalı.
+    return data // Backend wrapper { code: 200, data: { ... } } dönüyor, apiClient response interceptor bunu hallediyor olmalı.
   },
 
   // 2. Tek Kullanıcı Getir 
@@ -30,18 +30,19 @@ export const userApi = {
   createUser: async (userData: CreateUserRequest): Promise<User> => {
     // Backend '/add' route'unu bekliyor
     const { data } = await apiClient.post('/users/add', userData)
-    return data.data
+    return data
   },
 
   // 4. Kullanıcı Güncelle (POST /users/update)
   // Backend PUT /users/:id DEĞİL, POST /users/update bekliyor
   updateUser: async (_id: string, userData: UpdateUserRequest): Promise<User> => {
     // KRİTİK DÜZELTME: Backend body içinde "_id" bekliyor (id değil)
+    const { _id: userId, ...rest } = userData
     const { data } = await apiClient.post('/users/update', { 
       _id,
-      ...userData 
+      ...rest 
     })
-    return data.data
+    return data
   },
 
   // 5. Kullanıcı Sil (POST /users/delete)

@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import Cookie from 'js-cookie'
-import type { User } from '@/types'
 import { authApi } from '@/api/auth'
 
 interface AuthState {
