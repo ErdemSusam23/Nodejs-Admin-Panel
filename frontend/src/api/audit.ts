@@ -21,10 +21,10 @@ export const auditApi = {
     resource?: string, 
     startDate?: string, 
     endDate?: string 
-  }): Promise<PaginatedResponse<AuditLogItem>> => {
-    // Backend POST /auditlogs bekliyor
+  }) => {
+    // Burada params.page değerinin gönderildiğinden emin olun
     const { data } = await apiClient.post('/auditlogs', {
-      page: params.page,
+      page: params.page, // <-- Bu satır kritik
       limit: params.limit,
       action: params.action,
       resource: params.resource,
@@ -32,9 +32,8 @@ export const auditApi = {
       end_date: params.endDate
     })
     
-    // Backend { code: 200, data: { data: [], pagination: {} } } dönüyor
-    // apiClient interceptor'ı data.data döndürüyorsa burası direkt `return data` olabilir.
-    // Ancak önceki dashboard düzeltmemize göre `data.data` dönmeliyiz:
+    // Backend { code: 200, data: { data: [], pagination: {} } } dönüyor.
+    // Dönen verinin içindeki data objesini döndürüyoruz.
     return data.data 
   },
 

@@ -29,7 +29,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Download, Eye, X, Calendar } from 'lucide-react'
+import { Download, Eye, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 
@@ -76,6 +76,7 @@ export default function AuditLogsPage() {
     setFilterResource('')
     setStartDate('')
     setEndDate('')
+    setPage(1) // Filtre temizlenince ilk sayfaya dön
   }
 
   // Helper fonksiyonlar
@@ -106,7 +107,7 @@ export default function AuditLogsPage() {
           <div className="grid gap-4 md:grid-cols-5">
             <div className="space-y-2">
               <Label>İşlem</Label>
-              <Select value={filterAction} onValueChange={(val) => setFilterAction(val === "all" ? "" : val)}>
+              <Select value={filterAction} onValueChange={(val) => { setFilterAction(val === "all" ? "" : val); setPage(1); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tüm işlemler" />
                 </SelectTrigger>
@@ -123,7 +124,7 @@ export default function AuditLogsPage() {
 
             <div className="space-y-2">
               <Label>Kaynak</Label>
-              <Select value={filterResource} onValueChange={(val) => setFilterResource(val === "all" ? "" : val)}>
+              <Select value={filterResource} onValueChange={(val) => { setFilterResource(val === "all" ? "" : val); setPage(1); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tüm kaynaklar" />
                 </SelectTrigger>
@@ -140,12 +141,12 @@ export default function AuditLogsPage() {
 
             <div className="space-y-2">
                <Label>Başlangıç</Label>
-               <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+               <Input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} />
             </div>
 
             <div className="space-y-2">
                <Label>Bitiş</Label>
-               <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+               <Input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} />
             </div>
 
             <div className="space-y-2">
@@ -158,7 +159,7 @@ export default function AuditLogsPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Table & Pagination */}
       <Card>
         <CardHeader>
           <CardTitle>Loglar ({logsData?.pagination?.total || 0})</CardTitle>
@@ -176,9 +177,9 @@ export default function AuditLogsPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Yükleniyor...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8">Yükleniyor...</TableCell></TableRow>
               ) : logsData?.data?.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Kayıt Yok</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8">Kayıt Bulunamadı</TableCell></TableRow>
               ) : (
                 logsData?.data.map((log) => (
                   <TableRow key={log._id}>
@@ -202,6 +203,37 @@ export default function AuditLogsPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* --- EKLENEN SAYFALAMA BÖLÜMÜ --- */}
+          {logsData && logsData.pagination && logsData.pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 border-t pt-4">
+              <div className="text-sm text-muted-foreground">
+                Sayfa {logsData.pagination.page} / {logsData.pagination.totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Önceki
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= logsData.pagination.totalPages}
+                >
+                  Sonraki
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+          {/* --- SONU --- */}
+
         </CardContent>
       </Card>
 
@@ -215,27 +247,29 @@ export default function AuditLogsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                   <Label>Kullanıcı</Label>
-                   <p>{selectedLog.email}</p>
+                   <Label className="text-muted-foreground text-xs uppercase">Kullanıcı</Label>
+                   <p className="font-medium">{selectedLog.email}</p>
                 </div>
                 <div>
-                   <Label>Tarih</Label>
-                   <p>{format(new Date(selectedLog.created_at), 'dd.MM.yyyy HH:mm')}</p>
+                   <Label className="text-muted-foreground text-xs uppercase">Tarih</Label>
+                   <p className="font-medium">{format(new Date(selectedLog.created_at), 'dd.MM.yyyy HH:mm:ss')}</p>
                 </div>
                 <div>
-                   <Label>İşlem</Label>
-                   <p>{selectedLog.proc_type}</p>
+                   <Label className="text-muted-foreground text-xs uppercase">İşlem</Label>
+                   <p className="font-medium">{selectedLog.proc_type}</p>
                 </div>
                 <div>
-                   <Label>Konum</Label>
-                   <p>{selectedLog.location}</p>
+                   <Label className="text-muted-foreground text-xs uppercase">Konum</Label>
+                   <p className="font-medium">{selectedLog.location}</p>
                 </div>
               </div>
               <div>
-                <Label>Log Verisi (JSON)</Label>
-                <pre className="bg-slate-100 p-2 rounded text-xs overflow-auto max-h-40 mt-1">
-                  {JSON.stringify(selectedLog.log, null, 2)}
-                </pre>
+                <Label className="text-muted-foreground text-xs uppercase">Log Verisi (JSON)</Label>
+                <div className="bg-slate-950 text-slate-50 p-4 rounded-md mt-2 overflow-auto max-h-[300px]">
+                  <pre className="text-xs font-mono">
+                    {JSON.stringify(selectedLog.log, null, 2)}
+                  </pre>
+                </div>
               </div>
             </div>
           )}
