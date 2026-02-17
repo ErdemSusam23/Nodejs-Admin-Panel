@@ -29,9 +29,7 @@ var server = http.createServer(app);
 async function startServer() {
   try {
     // 1. Önce MongoDB'ye bağlan
-    console.log('Connecting to MongoDB...', config.CONNECTION_STRING);
     await new Database().connect(config.CONNECTION_STRING);
-    console.log('MongoDB Connected! ✅');
     
     // 2. Bağlantı başarılı olunca server'ı başlat
     server.listen(port);
