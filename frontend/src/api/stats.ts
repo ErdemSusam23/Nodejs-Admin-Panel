@@ -9,7 +9,7 @@ export interface DashboardStats {
 export const statsApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     // Backend: { code: 200, data: { users: 4, ... } } 
-    const response = await apiClient.get('/stats/dashboard');
+    const response = await apiClient.get('/stats');
     
     // response.data -> Axios'un body kısmı ({ code: 200, data: {...} })
     return response.data.data; 
