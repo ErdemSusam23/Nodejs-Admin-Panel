@@ -1,7 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { userApi } from '@/api/users'
-import { roleApi } from '@/api/roles'
-import { categoryApi } from '@/api/categories'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Shield, FolderTree, Activity } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
